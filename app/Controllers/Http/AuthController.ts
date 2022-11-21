@@ -28,11 +28,10 @@ export default class AuthController {
     )
   }
 
-  public async auth0Callback({ auth, request, response, session }: HttpContextContract) {
-    const { state } = request.all()
-    const sessionState = session.get('state')
-
-    if (state !== sessionState) return response.badRequest({ message: 'Invalid state' })
+  public async auth0Callback({ auth, request, response }: HttpContextContract) {
+    // const { state } = request.all()
+    // const sessionState = session.get('state')
+    // if (state !== sessionState) return response.badRequest({ message: 'Invalid state' })
 
     const { code } = request.all()
     let res = await axios.post(`${Env.get('AUTH0_DOMAIN')}/oauth/token`, {
@@ -53,8 +52,6 @@ export default class AuthController {
     })
 
     const { data } = res
-
-    console.log(data)
 
     let user = await User.findBy('email', data.email)
     if (!user) {

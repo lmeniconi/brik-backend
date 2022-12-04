@@ -1,7 +1,6 @@
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Database from '@ioc:Adonis/Lucid/Database'
 import Application from '@ioc:Adonis/Core/Application'
-import Drive from '@ioc:Adonis/Core/Drive'
 import { v4 as uuidv4 } from 'uuid'
 
 import Product from 'App/Models/Product'

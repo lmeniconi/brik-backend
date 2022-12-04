@@ -1,5 +1,7 @@
 import { DateTime } from 'luxon'
-import { column, BaseModel } from '@ioc:Adonis/Lucid/Orm'
+import { column, BaseModel, hasOne, HasOne } from '@ioc:Adonis/Lucid/Orm'
+
+import Store from './Store'
 
 export default class User extends BaseModel {
   @column({ isPrimary: true })
@@ -15,16 +17,19 @@ export default class User extends BaseModel {
   public lastName: string
 
   @column()
-  public picture: string | null
+  public picture?: string
 
   @column()
-  public provider: 'auth0'
+  public origin: 'auth0'
 
   @column()
-  public role: 'admin' | 'user'
+  public role: 'admin' | 'provider' | 'customer'
 
   @column()
   public rememberMeToken?: string
+
+  @hasOne(() => Store)
+  public store: HasOne<typeof Store>
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime

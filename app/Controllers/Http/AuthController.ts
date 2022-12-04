@@ -9,6 +9,7 @@ const FRONTEND_REDIRECT_URI = `${Env.get('FRONTEND_URL')}/auth/callback`
 
 export default class AuthController {
   public async me({ auth }: HttpContextContract) {
+    if (auth.user?.role === 'provider') await auth.user.load('store')
     return auth.user
   }
 
@@ -34,36 +35,48 @@ export default class AuthController {
     // if (state !== sessionState) return response.badRequest({ message: 'Invalid state' })
 
     const { code } = request.all()
-    let res = await axios.post(`${Env.get('AUTH0_DOMAIN')}/oauth/token`, {
-      client_id: Env.get('AUTH0_CLIENT_ID'),
-      client_secret: Env.get('AUTH0_CLIENT_SECRET'),
-      code,
-      grant_type: 'authorization_code',
-      redirect_uri: Env.get('APP_URL') + '/authorized',
-    })
+
+    let res
+    try {
+      res = await axios.post(`${Env.get('AUTH0_DOMAIN')}/oauth/token`, {
+        client_id: Env.get('AUTH0_CLIENT_ID'),
+        client_secret: Env.get('AUTH0_CLIENT_SECRET'),
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: Env.get('APP_URL') + '/authorized',
+      })
+    } catch {
+      console.error('Error getting token')
+      return response.badRequest({ message: 'Error getting token' })
+    }
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const { access_token } = res.data
 
-    res = await axios.get(`${Env.get('AUTH0_DOMAIN')}/userinfo`, {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    })
+    try {
+      res = await axios.get(`${Env.get('AUTH0_DOMAIN')}/userinfo`, {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      })
+    } catch {
+      console.error('Error getting user info')
+      return response.badRequest({ message: 'Error getting user info' })
+    }
 
     const { data } = res
 
     let user = await User.findBy('email', data.email)
     if (!user) {
       user = new User()
-      user.role = 'user'
+      user.role = 'customer'
     }
 
     user.email = data.email
     user.firstName = data.given_name
     user.lastName = data.family_name
     user.picture = data.picture
-    user.provider = 'auth0'
+    user.origin = 'auth0'
     await user.save()
 
     await auth.login(user)

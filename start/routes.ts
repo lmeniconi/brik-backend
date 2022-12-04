@@ -25,6 +25,26 @@ Route.get('/authorized/auth0', 'AuthController.auth0Callback')
 Route.get('/logout/auth0', 'AuthController.auth0Logout')
 Route.get('/logout/auth0/callback', 'AuthController.auth0LogoutCallback')
 
+Route.get('/stores/:slug', 'StoresController.show')
+
+Route.get('/products', 'ProductsController.index')
+Route.get('/products/:slug', 'ProductsController.show')
+
+Route.get('/categories', 'CategoriesController.index')
+Route.get('/categories/:slug', 'CategoriesController.show')
+
 Route.group(() => {
   Route.get('/me', 'AuthController.me')
+  Route.resource('/users', 'UsersController').apiOnly()
+
+  Route.post('/orders', 'OrdersController.store')
+
+  Route.group(() => {
+    Route.post('/products', 'ProductsController.store')
+    Route.put('/products/:slug', 'ProductsController.update')
+    Route.delete('/products/:slug', 'ProductsController.destroy')
+
+    Route.post('/stores', 'StoresController.store')
+    Route.put('/stores/:slug', 'StoresController.update')
+  }).middleware('role:admin,provider')
 }).middleware('auth')

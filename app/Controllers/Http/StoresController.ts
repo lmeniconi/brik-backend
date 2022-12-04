@@ -2,6 +2,7 @@ import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { kebabCase } from 'lodash'
 
 import Store from 'App/Models/Store'
+import Order from 'App/Models/Order'
 import StoreValidator from 'App/Validators/StoreValidator'
 
 export default class StoresController {
@@ -33,7 +34,8 @@ export default class StoresController {
   }
 
   public async update({ request, response, auth, params }: HttpContextContract) {
-    const searchedStore = await Store.findOrFail(params.id)
+    const { slug } = params
+    const searchedStore = await Store.findByOrFail('slug', slug)
 
     const user = auth.user
     if (!user) return response.unauthorized()
@@ -42,13 +44,28 @@ export default class StoresController {
 
     const payload = await request.validate(StoreValidator)
 
-    const slug = kebabCase(payload.name)
-    const data = { ...payload, slug }
+    const newSlug = kebabCase(payload.name)
+    const data = { ...payload, slug: newSlug }
 
-    const slugSearchedStore = await Store.findBy('slug', slug)
+    const slugSearchedStore = await Store.findBy('slug', data.slug)
     if (slugSearchedStore && slugSearchedStore.id !== searchedStore.id)
       return response.badRequest({ message: 'Store with this name already exists ' })
 
-    await Store.create(data)
+    searchedStore.merge(data)
+    await searchedStore.save()
+  }
+
+  public async orders({ response, auth }: HttpContextContract) {
+    const user = auth.user
+    if (!user) return response.unauthorized()
+
+    const userStore = await user.related('store').query().firstOrFail()
+
+    return await Order.query()
+      .where('storeId', userStore.id)
+      .preload('user')
+      .preload('products')
+      .preload('store')
+      .orderBy('created_at', 'desc')
   }
 }

@@ -25,6 +25,7 @@ export default class OrderValidator {
    */
   public schema = schema.create({
     total: schema.number(),
+    storeId: schema.number([rules.exists({ table: 'stores', column: 'id' })]),
     products: schema.array([rules.minLength(1)]).members(
       schema.object().members({
         id: schema.number([rules.exists({ table: 'products', column: 'id' })]),

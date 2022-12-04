@@ -36,6 +36,7 @@ Route.get('/categories/:slug', 'CategoriesController.show')
 Route.group(() => {
   Route.get('/me', 'AuthController.me')
   Route.resource('/users', 'UsersController').apiOnly()
+  Route.get('/orders', 'OrdersController.index')
 
   Route.post('/orders', 'OrdersController.store')
 
@@ -44,6 +45,7 @@ Route.group(() => {
     Route.put('/products/:slug', 'ProductsController.update')
     Route.delete('/products/:slug', 'ProductsController.destroy')
 
+    Route.get('/stores/:slug/orders', 'StoresController.orders')
     Route.post('/stores', 'StoresController.store')
     Route.put('/stores/:slug', 'StoresController.update')
   }).middleware('role:admin,provider')
